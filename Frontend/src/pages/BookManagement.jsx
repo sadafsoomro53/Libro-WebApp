@@ -62,6 +62,17 @@ const BookManagement = () => {
     price: ""
   });
 
+  // State for edit modal
+  const [editingBookModal, setEditingBookModal] = useState(null);
+  const [modalFormData, setModalFormData] = useState({
+    userId: "",
+    title: "",
+    type: "Fiction",
+    genre: "",
+    condition: "New",
+    price: ""
+  });
+
   // State for viewing book details
   const [viewingBook, setViewingBook] = useState(null);
 
@@ -77,6 +88,43 @@ const BookManagement = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Handle modal form input changes
+  const handleModalInputChange = (e) => {
+    const { name, value } = e.target;
+    setModalFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle modal form submission
+  const handleModalSubmit = (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!modalFormData.userId.trim() || !modalFormData.title.trim() || !modalFormData.genre.trim() || !modalFormData.price) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    const bookData = {
+      ...modalFormData,
+      price: Number(modalFormData.price),
+      id: editingBookModal.id
+    };
+
+    setBooks(books.map(book =>
+      book.id === editingBookModal.id ? bookData : book
+    ));
+
+    setEditingBookModal(null);
+  };
+
+  // Close edit modal
+  const closeEditModal = () => {
+    setEditingBookModal(null);
   };
 
   // Handle form submission
@@ -125,9 +173,8 @@ const BookManagement = () => {
 
   // Start editing a book
   const startEdit = (book) => {
-    setEditingBook(book);
-    setFormData(book);
-    setShowForm(true);
+    setEditingBookModal(book);
+    setModalFormData(book);
   };
 
   // Delete a book
@@ -277,6 +324,29 @@ const BookManagement = () => {
                 <button type="button" className="btn btn-secondary" onClick={closeViewModal}>
                   Close
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Book Modal */}
+      {editingBookModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit Book</h5>
+                <button type="button" className="btn-close" onClick={closeEditModal}></button>
+              </div>
+              <div className="modal-body">
+                <BookForm
+                  formData={modalFormData}
+                  editingBook={editingBookModal}
+                  onInputChange={handleModalInputChange}
+                  onSubmit={handleModalSubmit}
+                  onReset={closeEditModal}
+                />
               </div>
             </div>
           </div>

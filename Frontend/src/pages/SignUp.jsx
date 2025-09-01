@@ -26,8 +26,8 @@ export default function SignUp() {
       alert('Passwords do not match');
       return;
     }
-    // Pass user data to login page for seamless transition
-    navigate('/login', { state: { username: form.username, email: form.email, gender: form.gender, image: preview } });
+    // Pass user data to profile page for seamless transition
+    navigate('/profile', { state: { username: form.username, email: form.email, gender: form.gender, image: preview } });
   };
 
   return (

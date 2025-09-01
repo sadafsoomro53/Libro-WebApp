@@ -1,8 +1,6 @@
 import React from 'react'
 import Navbar from './components/Navbar/Navbar' 
 import Footer from './components/Footer/Footer'
-import Features from './pages/Features'
-import Vender from './pages/Vender'
 import Admin from './pages/Admin'
 import AllBooks from './pages/AllBooks'
 import Profile from './pages/Profile'
@@ -25,8 +23,6 @@ function App() {
               {/* Public Routes */}
                <Route path="/login" element={<Login />} />
               <Route path="/allbooks" element={<AllBooks />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/vender" element={<Vender />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/profile" element={<Profile />} />

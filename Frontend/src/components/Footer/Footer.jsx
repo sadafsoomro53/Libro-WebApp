@@ -55,13 +55,15 @@ const Footer = () => {
             <div className="row">
               <div className="col-6">
                 <ul className="list-unstyled">
-                  <li><a className="text-white text-decoration-none" href="/home">Home</a></li>
-                  <li><a className="text-white text-decoration-none" href="/about">About Us</a></li>
-                  <li><a className="text-white text-decoration-none" href="/books">Books</a></li>
-                  <li><a className="text-white text-decoration-none" href="/authors">Authors</a></li>
-                  <li><a className="text-white text-decoration-none" href="/events">Events</a></li>
-                  <li><a className="text-white text-decoration-none" href="/blog">Blog</a></li>
-                  <li><a className="text-white text-decoration-none" href="/support">Support</a></li>
+                  <li><a className="text-white text-decoration-none" href="/admin">Dashboard</a></li>
+                  <li><a className="text-white text-decoration-none" href="/users">Users Management</a></li>
+                  <li><a className="text-white text-decoration-none" href="/vendors">Vendors Management</a></li>
+                  <li><a className="text-white text-decoration-none" href="/books">Book Management</a></li>
+                  <li><a className="text-white text-decoration-none" href="/orders">Order/Transactions</a></li>
+                  <li><a className="text-white text-decoration-none" href="/reports">Reports</a></li>
+                  <li><a className="text-white text-decoration-none" href="/categories">Categories</a></li>
+                  <li><a className="text-white text-decoration-none" href="/notifications">Notifications</a></li>
+                  <li><a className="text-white text-decoration-none" href="/settings">Settings</a></li>
                   <li><a className="text-white text-decoration-none" href="/contact">Contact</a></li>
                 </ul>
               </div>

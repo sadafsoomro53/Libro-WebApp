@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaChartBar, FaUsers, FaStore, FaBook, FaCreditCard, FaChartLine, FaTags, FaBell, FaCog, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaChartBar, FaUsers, FaStore, FaBook, FaCreditCard, FaChartLine, FaTags, FaBell, FaCog, FaEye, FaEdit, FaTrash, FaUserFriends, FaStoreAlt, FaBookOpen } from 'react-icons/fa';
 import UserManagement from './UserManagement';
 import VendorManagement from './VendorManagement';
 import BookManagement from './BookManagement';
@@ -15,8 +15,39 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('Buy');
   const [isLoading, setIsLoading] = useState(false);
   const [timePeriod, setTimePeriod] = useState('weekly');
+  const [stats, setStats] = useState({ users: 1247, vendors: 356, books: 8924 });
+  const [dashboardBooks, setDashboardBooks] = useState([]);
 
-  const stats = { users: 1247, vendors: 356, books: 8924 };
+  // Load books from localStorage
+  useEffect(() => {
+    const loadBooks = () => {
+      try {
+        const booksData = localStorage.getItem("book-management-data");
+        const books = booksData ? JSON.parse(booksData) : [];
+        setStats(prevStats => ({
+          ...prevStats,
+          books: books.length
+        }));
+        // Get first 3 books for dashboard display
+        setDashboardBooks(books.slice(0, 3));
+      } catch (error) {
+        console.error("Error loading books from localStorage:", error);
+        setDashboardBooks([]);
+      }
+    };
+
+    loadBooks();
+    
+    // Add event listener to update when books change
+    const handleStorageChange = (e) => {
+      if (e.key === "book-management-data") {
+        loadBooks();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const transactions = new Array(4).fill(0).map((_, i) => ({
     id: i + 1,
@@ -102,13 +133,13 @@ export default function AdminDashboard() {
             {/* Top stat cards */}
             <div className="row mb-4">
               <div className="col-md-4 mb-3">
-                <StatCard title="Total Users" value={stats.users} icon={<FaUsers />} />
+                <StatCard title="Total Users" value={stats.users} icon={<FaUserFriends />} />
               </div>
               <div className="col-md-4 mb-3">
-                <StatCard title="Total Vendors" value={stats.vendors} icon={<FaStore />} />
+                <StatCard title="Total Vendors" value={stats.vendors} icon={<FaStoreAlt />} onClick={() => setActiveSection('vendors')} />
               </div>
               <div className="col-md-4 mb-3">
-                <StatCard title="Total Books" value={stats.books} icon={<FaBook />} />
+                <StatCard title="Total Books" value={stats.books} icon={<FaBookOpen />} onClick={() => setActiveSection('books')} />
               </div>
             </div>
 
@@ -156,15 +187,28 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ) : activeTab === 'Buy' || activeTab === 'Rent' || activeTab === 'Sell' || activeTab === 'Exchange' ? (
-                  <TransactionsTable transactions={transactions} mode={activeTab} />
+                  <TransactionsTable transactions={transactions.slice(0, 2)} mode={activeTab} />
                 ) : activeTab === 'Pending Approvals' ? (
-                  <PendingApprovalsTable transactions={transactions} />
+                  <PendingApprovalsTable transactions={transactions.slice(0, 2)} />
                 ) : (
-                  <TransactionForm mode={activeTab} />
+                  <div className="text-center py-4">
+                    <p className="text-muted">Add new transactions in the Orders section</p>
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => setActiveSection('orders')}
+                      style={{ background: 'linear-gradient(135deg, #15282E 0%, #0F969C 100%)', border: 'none' }}
+                    >
+                      Go to Orders
+                    </button>
+                  </div>
                 )}
 
                 <div className="mt-4 d-flex justify-content-end">
-                  <button className="d-flex align-items-center gap-2 text-white px-4 py-1 rounded shadow" style={{ background: "linear-gradient(to right, #0F969c 0%, #15282E 100%)" }}>
+                  <button 
+                    className="d-flex align-items-center gap-2 text-white px-4 py-1 rounded shadow" 
+                    style={{ background: "linear-gradient(to right, #0F969c 0%, #15282E 100%)" }}
+                    onClick={() => setActiveSection('orders')}
+                  >
                     View Full History
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -202,6 +246,68 @@ export default function AdminDashboard() {
               </div>
               <Charts timePeriod={timePeriod} />
             </div>
+
+            {/* Books Preview Section */}
+            <div className="bg-white rounded p-4 shadow mb-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <h3 className="text-2xl fw-semibold text-dark">Recent Books</h3>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => setActiveSection('books')}
+                  style={{ background: 'linear-gradient(135deg, #15282E 0%, #0F969C 100%)', border: 'none' }}
+                >
+                  View All Books
+                </button>
+              </div>
+              {dashboardBooks.length > 0 ? (
+                <div className="row g-4">
+                  {dashboardBooks.map((book) => (
+                    <div key={book.id} className="col-md-4">
+                      <div className="card shadow-sm h-100">
+                        <div className="card-body">
+                          <h5 className="card-title">{book.title}</h5>
+                          <p className="card-text">
+                            <strong>User:</strong> {book.userName}<br />
+                            <strong>Genre:</strong> {book.genre}<br />
+                            <strong>Type:</strong> {book.fictionNonfiction}<br />
+                            <strong>Price:</strong> Rs. {book.price.toLocaleString()}<br />
+                            <strong>Quantity:</strong> {book.quantity}
+                          </p>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span className={`badge ${
+                              book.condition === 'New' ? 'bg-success' :
+                              book.condition === 'Good' ? 'bg-primary' :
+                              book.condition === 'Used' ? 'bg-warning text-dark' :
+                              'bg-secondary'
+                            }`}>
+                              {book.condition}
+                            </span>
+                            <span className={`badge ${
+                              book.fictionNonfiction === 'Fiction' ? 'bg-info' :
+                              'bg-dark'
+                            }`}>
+                              {book.fictionNonfiction}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-5">
+                  <h4 className="text-muted">No books available</h4>
+                  <p className="text-muted">Add books in the Book Management section</p>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => setActiveSection('books')}
+                    style={{ background: 'linear-gradient(135deg, #15282E 0%, #0F969C 100%)', border: 'none' }}
+                  >
+                    Add Books
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
       </main>
@@ -210,9 +316,13 @@ export default function AdminDashboard() {
 }
 
 /* ------------------ Components ------------------ */
-function StatCard({ title, value, icon }) {
+function StatCard({ title, value, icon, onClick }) {
+  const statCardClass = onClick 
+    ? "bg-white rounded p-4 shadow d-flex align-items-center justify-content-between"
+    : "bg-white rounded p-4 shadow d-flex align-items-center justify-content-between";
+    
   return (
-    <div className="bg-white rounded p-4 shadow d-flex align-items-center justify-content-between">
+    <div className={statCardClass} onClick={onClick} style={onClick ? { cursor: 'pointer' } : {}}>
       <div>
         <p className="text-muted small mb-1">{title}</p>
         <p className="h3 fw-bold text-dark">{value.toLocaleString()}</p>

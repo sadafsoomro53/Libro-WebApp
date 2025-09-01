@@ -38,6 +38,7 @@
     width: 100%;
     margin: 0.25rem 0;
   }
+  
 }
 
 /* Tablet styles */
@@ -115,23 +116,6 @@
   pointer-events: auto;
 }
 
-
-
-/* backdrop for offcanvas */
-.custom-offcanvas-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 1040; /* below navbar-collapse (we'll set 1045) */
-}
-.custom-offcanvas-backdrop.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 /* Mobile: collapse ko right-side offcanvas bana do */
 @media (max-width: 991.98px) {
   .navbar .navbar-collapse {
@@ -158,6 +142,7 @@
   .navbar .navbar-nav {
     align-items: flex-start !important;
     gap: 0.25rem;
+    margin-top: 3rem; /* Add space for profile icon */
   }
 
   /* make links full-width for easy tapping */

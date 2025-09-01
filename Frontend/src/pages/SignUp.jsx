@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
 
 export default function SignUp() {
   const [role, setRole] = useState('user');
-  const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '', address: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '', gender: '' });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const navigate = useNavigate();
@@ -26,7 +26,8 @@ export default function SignUp() {
       alert('Passwords do not match');
       return;
     }
-    navigate('/profile', { state: { role, ...form, image: preview } });
+    // Pass user data to login page for seamless transition
+    navigate('/login', { state: { username: form.username, email: form.email, gender: form.gender, image: preview } });
   };
 
   return (
@@ -46,6 +47,10 @@ export default function SignUp() {
           </div>
 
           <p> Please upload an image </p>
+          <div className="mb-3">
+            <input type="file" accept="image/*" onChange={handleImage} />
+            {preview && <img src={preview} alt="Preview" className="img-thumbnail mt-2" style={{ maxHeight: 150 }} />}
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -120,22 +125,19 @@ export default function SignUp() {
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Address</label>
-              <div className="input-group">
-                <span className="input-group-text bg-light">
-<FaMapMarkerAlt style={{ color: 'black' }} />
-                </span>
-                <input
-                  type="text"
-                  name="address"
-                  value={form.address}
-                  onChange={handleChange}
-                  className="form-control"
-                  placeholder="Enter address"
-                  required
-                />
-              </div>
+            <div className="mb-3">
+              <label className="form-label fw-semibold">Gender</label>
+              <select
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+                className="form-select"
+                required
+              >
+                <option value="" disabled>Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
             </div>
 
             <button

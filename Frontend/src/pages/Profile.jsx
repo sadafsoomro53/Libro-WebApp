@@ -1,14 +1,23 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaMapMarkerAlt, FaUserTag } from 'react-icons/fa';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaUserTag } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 export default function Profile() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
   const userData = location.state || {
     username: 'Guest',
     email: 'guest@example.com',
-    address: 'Not specified',
+    gender: 'Not specified',
     image: null
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -53,13 +62,16 @@ export default function Profile() {
 
           <div className="text-center mb-4">
             <h3 className="fw-bold">{userData.username || 'User'}</h3>
-            <p className="text-muted">{userData.email || 'demo@example.com'}</p>
-            <p className="text-muted">{userData.address || 'Not specified'}</p>
+            <p className="text-muted"><FaEnvelope className="me-2" />{userData.email || 'demo@example.com'}</p>
+            <p className="text-muted"><FaUserTag className="me-2" />{userData.gender || 'Not specified'}</p>
           </div>
 
-          <div className="text-center">
+          <div className="d-flex justify-content-center gap-3">
+            <button onClick={handleLogout} className="btn btn-danger">
+              Logout
+            </button>
             <Link to="/admin" className="btn btn-dark">
-              Back to Admin
+              Go to Admin Dashboard
             </Link>
           </div>
         </div>

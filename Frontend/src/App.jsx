@@ -2,7 +2,6 @@ import React from 'react'
 import Navbar from './components/Navbar/Navbar' 
 import Footer from './components/Footer/Footer'
 import Admin from './pages/Admin'
-import AllBooks from './pages/AllBooks'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
@@ -22,7 +21,6 @@ function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
               {/* Public Routes */}
                <Route path="/login" element={<Login />} />
-              <Route path="/allbooks" element={<AllBooks />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/profile" element={<Profile />} />

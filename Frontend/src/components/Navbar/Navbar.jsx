@@ -139,24 +139,8 @@ const Navbar = () => {
                 </Link>
               </li>
 
-              <li className="nav-item">
-                <Link
-                  className="nav-link text-light px-3 py-2"
-                  to="/admin"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Admin
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link
-                  className="nav-link text-light px-3 py-2"
-                  to="/allbooks"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  All Books
-                </Link>
-              </li>
+           
+          
               {/* Profile icon for desktop view */}
               {user && (
                 <li className="nav-item position-relative ms-3 d-none d-lg-block" ref={profileRef}>

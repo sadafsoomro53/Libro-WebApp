@@ -65,7 +65,7 @@ export default function AdminDashboard() {
     { id: 'users', label: 'Users Management', icon: <FaUsers />, path: '/users' },
     { id: 'vendors', label: 'Vendors Management', icon: <FaStore />, path: '/vendors' },
     { id: 'books', label: 'Book Management', icon: <FaBook />, path: '/books' },
-    { id: 'orders', label: 'Order/Transactions', icon: <FaCreditCard />, path: '/orders' },
+    { id: 'orders', label: 'Transactions Details', icon: <FaCreditCard />, path: '/orders' },
     { id: 'reports', label: 'Reports', icon: <FaChartLine />, path: '/reports' },
     { id: 'categories', label: 'Categories', icon: <FaTags />, path: '/categories' },
     { id: 'notifications', label: 'Notifications', icon: <FaBell />, path: '/notifications' },

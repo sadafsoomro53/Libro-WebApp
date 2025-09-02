@@ -1,11 +1,42 @@
 // src/pages/Settings.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { FaBell, FaUserEdit, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
+import { FaBell, FaUserEdit, FaUserPlus, FaSignOutAlt, FaUserSlash, FaStoreSlash } from "react-icons/fa";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("sub-admin");
   const [muteNotifications, setMuteNotifications] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [blockedVendors, setBlockedVendors] = useState([]);
+
+  // Load blocked users and vendors from localStorage
+  useEffect(() => {
+    const users = JSON.parse(localStorage.getItem("user-management-data") || "[]");
+    const vendors = JSON.parse(localStorage.getItem("vendor-management-data") || "[]");
+
+    setBlockedUsers(users.filter(user => user.blocked));
+    setBlockedVendors(vendors.filter(vendor => vendor.blocked));
+  }, [activeTab]); // Reload when tab changes
+
+  // Unblock user
+  const unblockUser = (id) => {
+    const users = JSON.parse(localStorage.getItem("user-management-data") || "[]");
+    const updatedUsers = users.map(user =>
+      user.id === id ? { ...user, blocked: false } : user
+    );
+    localStorage.setItem("user-management-data", JSON.stringify(updatedUsers));
+    setBlockedUsers(updatedUsers.filter(user => user.blocked));
+  };
+
+  // Unblock vendor
+  const unblockVendor = (id) => {
+    const vendors = JSON.parse(localStorage.getItem("vendor-management-data") || "[]");
+    const updatedVendors = vendors.map(vendor =>
+      vendor.id === id ? { ...vendor, blocked: false } : vendor
+    );
+    localStorage.setItem("vendor-management-data", JSON.stringify(updatedVendors));
+    setBlockedVendors(updatedVendors.filter(vendor => vendor.blocked));
+  };
 
   return (
     <div
@@ -25,7 +56,7 @@ const Settings = () => {
         >
           <div>
             {/* Notifications */}
-            <div className="d-flex align-items-center justify-content-between mb-4">
+            <div className="d-flex align-items-center justify-content-between mb-3 p-2">
               <div className="d-flex align-items-center gap-2">
                 <FaBell size={20} />
                 <span>Mute Notifications</span>
@@ -68,7 +99,7 @@ const Settings = () => {
 
             {/* Add Sub-Admin */}
             <div
-              className={`d-flex align-items-center gap-2 p-2 ${
+              className={`d-flex align-items-center gap-2 p-2 mb-3 ${
                 activeTab === "sub-admin"
                   ? "text-white"
                   : "text-dark"
@@ -85,6 +116,48 @@ const Settings = () => {
             >
               <FaUserPlus />
               <span>Add Sub-Admin</span>
+            </div>
+
+            {/* Blocked Users */}
+            <div
+              className={`d-flex align-items-center gap-2 p-2 mb-3 ${
+                activeTab === "blocked-users"
+                  ? "text-white"
+                  : "text-dark"
+              }`}
+              style={{
+                background:
+                  activeTab === "blocked-users"
+                    ? "linear-gradient(90deg,#04364A,#2D9596)"
+                    : "transparent",
+                cursor: "pointer",
+                borderRadius: activeTab === "blocked-users" ? "20px" : "0px",
+              }}
+              onClick={() => setActiveTab("blocked-users")}
+            >
+              <FaUserSlash />
+              <span>Blocked Users</span>
+            </div>
+
+            {/* Blocked Vendors */}
+            <div
+              className={`d-flex align-items-center gap-2 p-2 mb-3 ${
+                activeTab === "blocked-vendors"
+                  ? "text-white"
+                  : "text-dark"
+              }`}
+              style={{
+                background:
+                  activeTab === "blocked-vendors"
+                    ? "linear-gradient(90deg,#04364A,#2D9596)"
+                    : "transparent",
+                cursor: "pointer",
+                borderRadius: activeTab === "blocked-vendors" ? "20px" : "0px",
+              }}
+              onClick={() => setActiveTab("blocked-vendors")}
+            >
+              <FaStoreSlash />
+              <span>Blocked Vendors</span>
             </div>
           </div>
 
@@ -217,6 +290,102 @@ const Settings = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {activeTab === "blocked-users" && (
+            <div>
+              <h5 className="mb-4">Blocked Users ({blockedUsers.length})</h5>
+              {blockedUsers.length === 0 ? (
+                <div className="text-center py-5">
+                  <p className="text-muted">No blocked users found.</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>User ID</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {blockedUsers.map((user) => (
+                        <tr key={user.id}>
+                          <td className="fw-medium">{user.name}</td>
+                          <td className="text-muted">{user.email}</td>
+                          <td className="text-muted">{user.phone}</td>
+                          <td className="fw-medium">{user.userId}</td>
+                          <td>
+                            <span className="badge bg-danger">Blocked</span>
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => unblockUser(user.id)}
+                            >
+                              Unblock
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "blocked-vendors" && (
+            <div>
+              <h5 className="mb-4">Blocked Vendors ({blockedVendors.length})</h5>
+              {blockedVendors.length === 0 ? (
+                <div className="text-center py-5">
+                  <p className="text-muted">No blocked vendors found.</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Shop Name</th>
+                        <th>Contact</th>
+                        <th>CNIC</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {blockedVendors.map((vendor) => (
+                        <tr key={vendor.id}>
+                          <td className="fw-medium">{vendor.name}</td>
+                          <td className="text-muted">{vendor.email}</td>
+                          <td className="fw-medium">{vendor.shopName}</td>
+                          <td className="text-muted">{vendor.contact}</td>
+                          <td className="text-muted">{vendor.cnic}</td>
+                          <td>
+                            <span className="badge bg-danger">Blocked</span>
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => unblockVendor(vendor.id)}
+                            >
+                              Unblock
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

@@ -76,12 +76,30 @@ const UserManagement = ({ initialTab = 'Add User' }) => {
 
   // Toggle block/unblock user
   const toggleBlockUser = (id) => {
-    setUsers(users.map(user => {
-      if (user.id === id) {
-        return { ...user, blocked: !user.blocked };
+    const user = users.find(u => u.id === id);
+    const isBlocking = !user.blocked;
+
+    if (isBlocking) {
+      if (window.confirm(`Are you sure you want to block ${user.name}? They will be added to the blocked users list in Settings.`)) {
+        setUsers(users.map(u => {
+          if (u.id === id) {
+            return { ...u, blocked: true };
+          }
+          return u;
+        }));
+        // Show navigation hint
+        setTimeout(() => {
+          alert(`User ${user.name} has been blocked. You can manage blocked users in Settings > Blocked Users.`);
+        }, 100);
       }
-      return user;
-    }));
+    } else {
+      setUsers(users.map(u => {
+        if (u.id === id) {
+          return { ...u, blocked: false };
+        }
+        return u;
+      }));
+    }
   };
 
   // State for form handling

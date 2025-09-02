@@ -63,7 +63,22 @@ const seedVendors = [
     rating: 4.0,
     address: '321 Elm St, City, Country',
     businessType: 'Publisher',
-    blocked: false
+    blocked: true
+  },
+  {
+    id: 5,
+    name: 'Book Haven',
+    email: 'bookhaven@email.com',
+    cnic: '42501-3456789-0',
+    shopName: 'Book Haven Store',
+    registrationStatus: 'Approved',
+    contact: '+92 356 3456789',
+    books: 156,
+    joinDate: '18 May 2023',
+    rating: 4.3,
+    address: '654 Oak St, City, Country',
+    businessType: 'Bookstore',
+    blocked: true
   }
 ];
 
@@ -76,12 +91,30 @@ const VendorManagement = ({ initialTab = 'Add Vendor' }) => {
 
   // Toggle block/unblock vendor
   const toggleBlockVendor = (id) => {
-    setVendors(vendors.map(vendor => {
-      if (vendor.id === id) {
-        return { ...vendor, blocked: !vendor.blocked };
+    const vendor = vendors.find(v => v.id === id);
+    const isBlocking = !vendor.blocked;
+
+    if (isBlocking) {
+      if (window.confirm(`Are you sure you want to block ${vendor.name}? They will be added to the blocked vendors list in Settings.`)) {
+        setVendors(vendors.map(v => {
+          if (v.id === id) {
+            return { ...v, blocked: true };
+          }
+          return v;
+        }));
+        // Show navigation hint
+        setTimeout(() => {
+          alert(`Vendor ${vendor.name} has been blocked. You can manage blocked vendors in Settings > Blocked Vendors.`);
+        }, 100);
       }
-      return vendor;
-    }));
+    } else {
+      setVendors(vendors.map(v => {
+        if (v.id === id) {
+          return { ...v, blocked: false };
+        }
+        return v;
+      }));
+    }
   };
 
   // State for form handling

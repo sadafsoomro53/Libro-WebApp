@@ -41,6 +41,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (updatedData) => {
+    const updatedUser = { ...user, ...updatedData };
+    localStorage.setItem('libro_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   const isAdmin = () => {
     return user?.role === 'admin';
   };
@@ -57,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateUser,
     isAdmin,
     isVendor,
     isUser,

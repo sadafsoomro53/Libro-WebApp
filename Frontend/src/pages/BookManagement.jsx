@@ -43,7 +43,7 @@ const seedBooks = [
   }
 ];
 
-const BookManagement = () => {
+const BookManagement = ({ initialTab }) => {
   // State for books data
   const [books, setBooks] = useState(() => {
     const saved = localStorage.getItem(LS_BOOKS);
@@ -194,8 +194,14 @@ const BookManagement = () => {
     setViewingBook(null);
   };
 
-  const [activeTab, setActiveTab] = useState('Add Book');
+  const [activeTab, setActiveTab] = useState(initialTab || 'Add Book');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const handleTabChange = (tab) => {
     setIsLoading(true);
@@ -207,10 +213,12 @@ const BookManagement = () => {
     <div className="container-fluid py-4">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="text-3xl fw-bold text-dark mb-2">
-          <FaBook className="me-2" />
-          Book Management
-        </h1>
+        <div className="d-flex align-items-center">
+          <h1 className="text-3xl fw-bold text-dark mb-2">
+            <FaBook className="me-2" />
+            Book Management
+          </h1>
+        </div>
         <p className="text-primary">Manage all book inventory and details</p>
       </div>
 

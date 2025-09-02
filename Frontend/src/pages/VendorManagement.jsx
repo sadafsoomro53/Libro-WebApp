@@ -17,7 +17,8 @@ const seedVendors = [
     joinDate: '15 Jan 2023',
     rating: 4.5,
     address: '123 Main St, City, Country',
-    businessType: 'Bookstore'
+    businessType: 'Bookstore',
+    blocked: false
   },
   {
     id: 2,
@@ -31,7 +32,8 @@ const seedVendors = [
     joinDate: '28 Feb 2023',
     rating: 4.2,
     address: '456 Oak Ave, City, Country',
-    businessType: 'Bookstore'
+    businessType: 'Bookstore',
+    blocked: false
   },
   {
     id: 3,
@@ -45,7 +47,8 @@ const seedVendors = [
     joinDate: '12 Mar 2023',
     rating: 4.8,
     address: '789 Pine Rd, City, Country',
-    businessType: 'Online Retailer'
+    businessType: 'Online Retailer',
+    blocked: false
   },
   {
     id: 4,
@@ -59,16 +62,27 @@ const seedVendors = [
     joinDate: '05 Apr 2023',
     rating: 4.0,
     address: '321 Elm St, City, Country',
-    businessType: 'Publisher'
+    businessType: 'Publisher',
+    blocked: false
   }
 ];
 
-const VendorManagement = () => {
+const VendorManagement = ({ initialTab = 'Add Vendor' }) => {
   // State for vendors data
   const [vendors, setVendors] = useState(() => {
     const saved = localStorage.getItem(LS_VENDORS);
     return saved ? JSON.parse(saved) : seedVendors;
   });
+
+  // Toggle block/unblock vendor
+  const toggleBlockVendor = (id) => {
+    setVendors(vendors.map(vendor => {
+      if (vendor.id === id) {
+        return { ...vendor, blocked: !vendor.blocked };
+      }
+      return vendor;
+    }));
+  };
 
   // State for form handling
   const [showForm, setShowForm] = useState(false);
@@ -77,11 +91,11 @@ const VendorManagement = () => {
     name: '',
     email: '',
     contact: '',
-    address: '',
-    businessType: 'Bookstore',
     cnic: '',
     shopName: '',
-    registrationStatus: 'Pending'
+    businessType: 'Bookstore',
+    registrationStatus: 'Pending',
+    address: ''
   });
 
   // State for edit modal
@@ -90,11 +104,11 @@ const VendorManagement = () => {
     name: '',
     email: '',
     contact: '',
-    address: '',
-    businessType: 'Bookstore',
     cnic: '',
     shopName: '',
-    registrationStatus: 'Pending'
+    businessType: 'Bookstore',
+    registrationStatus: 'Pending',
+    address: ''
   });
 
   // State for viewing vendor details
@@ -136,9 +150,9 @@ const VendorManagement = () => {
     const vendorData = {
       ...modalFormData,
       id: editingVendorModal.id,
+      joinDate: editingVendorModal.joinDate,
       books: editingVendorModal.books,
-      rating: editingVendorModal.rating,
-      joinDate: editingVendorModal.joinDate
+      rating: editingVendorModal.rating
     };
 
     setVendors(vendors.map(vendor =>
@@ -166,13 +180,13 @@ const VendorManagement = () => {
     const vendorData = {
       ...formData,
       id: editingVendor ? editingVendor.id : Date.now(),
-      books: editingVendor ? editingVendor.books : Math.floor(Math.random() * 200) + 50,
-      rating: editingVendor ? editingVendor.rating : (Math.random() * 2 + 3).toFixed(1),
       joinDate: editingVendor ? editingVendor.joinDate : new Date().toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
-      })
+      }),
+      books: editingVendor ? editingVendor.books : Math.floor(Math.random() * 200) + 50,
+      rating: editingVendor ? editingVendor.rating : (Math.random() * 2 + 3).toFixed(1)
     };
 
     if (editingVendor) {
@@ -195,11 +209,11 @@ const VendorManagement = () => {
       name: '',
       email: '',
       contact: '',
-      address: '',
-      businessType: 'Bookstore',
       cnic: '',
       shopName: '',
-      registrationStatus: 'Pending'
+      businessType: 'Bookstore',
+      registrationStatus: 'Pending',
+      address: ''
     });
     setEditingVendor(null);
     setShowForm(false);
@@ -231,6 +245,11 @@ const VendorManagement = () => {
   const [activeTab, setActiveTab] = useState('Add Vendor');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Set initial tab based on prop
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const handleTabChange = (tab) => {
     setIsLoading(true);
     setActiveTab(tab);
@@ -242,7 +261,7 @@ const VendorManagement = () => {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 className="text-3xl fw-bold text-dark mb-2">Vendor Management</h1>
-        <p className="text-primary">Manage all vendor activities and information</p>
+        <p className="text-primary">Manage all vendor accounts and information</p>
       </div>
 
       {/* Vendor summary card */}
@@ -250,7 +269,7 @@ const VendorManagement = () => {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <div>
             <h3 className="text-2xl fw-semibold text-white">Vendor Management</h3>
-            <p className="text-white small">Manage vendor profiles, inventory, and performance</p>
+            <p className="text-white small">Manage vendor profiles, accounts, and activities</p>
           </div>
           <div className="d-flex gap-2">
             <div className="px-3 py-1 rounded text-white small fw-medium" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
@@ -289,7 +308,7 @@ const VendorManagement = () => {
               </div>
             </div>
           ) : activeTab === 'View Vendors' ? (
-            <VendorsTable vendors={vendors} onView={viewVendor} onEdit={startEdit} onDelete={deleteVendor} />
+            <VendorsTable vendors={vendors} onView={viewVendor} onEdit={startEdit} onDelete={deleteVendor} onBlockToggle={toggleBlockVendor} />
           ) : activeTab === 'Vendor Performance' ? (
             <VendorPerformance vendors={vendors} />
           ) : activeTab === 'Inventory Management' ? (
@@ -326,6 +345,10 @@ const VendorManagement = () => {
                     <p>{viewingVendor.email}</p>
                   </div>
                   <div className="col-12 mb-3">
+                    <h6>Contact:</h6>
+                    <p>{viewingVendor.contact}</p>
+                  </div>
+                  <div className="col-12 mb-3">
                     <h6>CNIC:</h6>
                     <p>{viewingVendor.cnic}</p>
                   </div>
@@ -338,16 +361,11 @@ const VendorManagement = () => {
                     <p>{viewingVendor.businessType}</p>
                   </div>
                   <div className="col-12 mb-3">
-                    <h6>Contact:</h6>
-                    <p>{viewingVendor.contact}</p>
-                  </div>
-                  <div className="col-12 mb-3">
                     <h6>Registration Status:</h6>
                     <p>
                       <span className={`badge ${
                         viewingVendor.registrationStatus === 'Approved' ? 'bg-success' :
-                        viewingVendor.registrationStatus === 'Pending' ? 'bg-warning text-dark' :
-                        'bg-danger'
+                        viewingVendor.registrationStatus === 'Pending' ? 'bg-warning text-dark' : 'bg-danger'
                       }`}>
                         {viewingVendor.registrationStatus}
                       </span>
@@ -384,21 +402,117 @@ const VendorManagement = () => {
       {/* Edit Vendor Modal */}
       {editingVendorModal && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-lg">
+          <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Edit Vendor</h5>
                 <button type="button" className="btn-close" onClick={closeEditModal}></button>
               </div>
-              <div className="modal-body">
-                <VendorForm
-                  formData={modalFormData}
-                  editingVendor={editingVendorModal}
-                  onInputChange={handleModalInputChange}
-                  onSubmit={handleModalSubmit}
-                  onReset={closeEditModal}
-                />
-              </div>
+              <form onSubmit={handleModalSubmit}>
+                <div className="modal-body">
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Vendor Name *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="name"
+                        value={modalFormData.name}
+                        onChange={handleModalInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Email *</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        name="email"
+                        value={modalFormData.email}
+                        onChange={handleModalInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Contact Number *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="contact"
+                        value={modalFormData.contact}
+                        onChange={handleModalInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">CNIC *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="cnic"
+                        value={modalFormData.cnic}
+                        onChange={handleModalInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Shop Name</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="shopName"
+                        value={modalFormData.shopName}
+                        onChange={handleModalInputChange}
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Business Type</label>
+                      <select
+                        className="form-select"
+                        name="businessType"
+                        value={modalFormData.businessType}
+                        onChange={handleModalInputChange}
+                      >
+                        <option value="Bookstore">Bookstore</option>
+                        <option value="Online Retailer">Online Retailer</option>
+                        <option value="Publisher">Publisher</option>
+                        <option value="Distributor">Distributor</option>
+                      </select>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">Registration Status</label>
+                      <select
+                        className="form-select"
+                        name="registrationStatus"
+                        value={modalFormData.registrationStatus}
+                        onChange={handleModalInputChange}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div className="col-12 mb-3">
+                      <label className="form-label">Address</label>
+                      <textarea
+                        className="form-control"
+                        name="address"
+                        value={modalFormData.address}
+                        onChange={handleModalInputChange}
+                        rows="3"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={closeEditModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Update Vendor
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -408,7 +522,7 @@ const VendorManagement = () => {
 };
 
 /* ------------------ Vendor Components ------------------ */
-function VendorsTable({ vendors, onView, onEdit, onDelete }) {
+function VendorsTable({ vendors, onView, onEdit, onDelete, onBlockToggle }) {
   return (
     <div className="table-responsive">
       <table className="table table-striped">
@@ -420,12 +534,13 @@ function VendorsTable({ vendors, onView, onEdit, onDelete }) {
             <th>Shop Name</th>
             <th>Registration Status</th>
             <th>Rating</th>
+            <th>Blocked</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {vendors.map((vendor) => (
-            <tr key={vendor.id}>
+            <tr key={vendor.id} className={vendor.blocked ? 'table-danger' : ''}>
               <td className="fw-medium">{vendor.name}</td>
               <td className="text-muted">{vendor.email}</td>
               <td className="text-muted">{vendor.cnic}</td>
@@ -444,6 +559,13 @@ function VendorsTable({ vendors, onView, onEdit, onDelete }) {
                 </span>
               </td>
               <td>
+                {vendor.blocked ? (
+                  <span className="badge bg-danger">Blocked</span>
+                ) : (
+                  <span className="badge bg-success">Active</span>
+                )}
+              </td>
+              <td>
                 <div className="d-flex gap-1 flex-column flex-sm-row">
                   <button
                     title="View"
@@ -458,6 +580,13 @@ function VendorsTable({ vendors, onView, onEdit, onDelete }) {
                     onClick={() => onEdit(vendor)}
                   >
                     <FaEdit />
+                  </button>
+                  <button
+                    title={vendor.blocked ? "Unblock" : "Block"}
+                    className={`btn btn-sm btn-outline-${vendor.blocked ? "success" : "warning"}`}
+                    onClick={() => onBlockToggle(vendor.id)}
+                  >
+                    {vendor.blocked ? "Unblock" : "Block"}
                   </button>
                   <button
                     title="Delete"
@@ -480,9 +609,9 @@ function VendorPerformance({ vendors }) {
   return (
     <div className="text-center py-4">
       <h4 className="text-dark mb-3">Vendor Performance Metrics</h4>
-      <div className="row">
-        {vendors.map((vendor) => (
-          <div key={vendor.id} className="col-md-3 mb-3">
+  <div className="row">
+    {vendors.map((vendor) => (
+      <div key={vendor.id} className="col-md-6 mb-3">
             <div className="card border-0 shadow">
               <div className="card-body">
                 <h6 className="card-title">{vendor.name}</h6>
@@ -624,13 +753,14 @@ function VendorForm({ formData, editingVendor, onInputChange, onSubmit, onReset 
         </select>
       </div>
 
-      <div className="col-md-6">
+      <div className="col-12 mb-3">
         <label className="form-label">Address</label>
-        <input
+        <textarea
+          className="form-control"
           name="address"
           value={formData.address}
           onChange={onInputChange}
-          className="form-control"
+          rows="3"
           placeholder="Enter complete address"
         />
       </div>

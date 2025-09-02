@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaChartBar, FaUsers, FaStore, FaBook, FaCreditCard, FaChartLine, FaTags, FaBell, FaCog, FaEye, FaEdit, FaTrash, FaUserFriends, FaStoreAlt, FaBookOpen } from 'react-icons/fa';
+import { FaChartBar, FaUsers, FaStore, FaBook, FaCreditCard, FaChartLine, FaCog, FaEye, FaEdit, FaTrash, FaUserFriends, FaStoreAlt, FaBookOpen } from 'react-icons/fa';
 import UserManagement from './UserManagement';
 import VendorManagement from './VendorManagement';
 import BookManagement from './BookManagement';
 import Orders from './Orders';
 import Reports from './Reports';
-import Categories from './Categories';
-import Notifications from './Notifications';
 import Settings from './Settings';
 import Charts from '../components/Charts';
 
@@ -15,7 +13,41 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('Buy');
   const [isLoading, setIsLoading] = useState(false);
   const [timePeriod, setTimePeriod] = useState('weekly');
-  const [stats, setStats] = useState({ users: 1247, vendors: 356, books: 8924 });
+  const [userInitialTab, setUserInitialTab] = useState('Add User');
+  const [vendorInitialTab, setVendorInitialTab] = useState('Add Vendor');
+  const [bookManagementTab, setBookManagementTab] = useState('Add Book');
+const [stats, setStats] = useState({ users: 0, vendors: 0, books: 8924 });
+
+useEffect(() => {
+  const loadUsersCount = () => {
+    try {
+      const usersData = localStorage.getItem("user-management-data");
+      const users = usersData ? JSON.parse(usersData) : [];
+      setStats(prevStats => ({
+        ...prevStats,
+        users: users.length
+      }));
+    } catch (error) {
+      console.error("Error loading users from localStorage:", error);
+      setStats(prevStats => ({
+        ...prevStats,
+        users: 0
+      }));
+    }
+  };
+
+  loadUsersCount();
+
+  // Add event listener to update when users change in localStorage
+  const handleStorageChange = (e) => {
+    if (e.key === "user-management-data") {
+      loadUsersCount();
+    }
+  };
+
+  window.addEventListener("storage", handleStorageChange);
+  return () => window.removeEventListener("storage", handleStorageChange);
+}, []);
   const [dashboardBooks, setDashboardBooks] = useState([]);
 
   // Load books from localStorage
@@ -49,6 +81,38 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  // Load vendors from localStorage
+  useEffect(() => {
+    const loadVendorsCount = () => {
+      try {
+        const vendorsData = localStorage.getItem("vendor-management-data");
+        const vendors = vendorsData ? JSON.parse(vendorsData) : [];
+        setStats(prevStats => ({
+          ...prevStats,
+          vendors: vendors.length
+        }));
+      } catch (error) {
+        console.error("Error loading vendors from localStorage:", error);
+        setStats(prevStats => ({
+          ...prevStats,
+          vendors: 0
+        }));
+      }
+    };
+
+    loadVendorsCount();
+
+    // Add event listener to update when vendors change in localStorage
+    const handleStorageChange = (e) => {
+      if (e.key === "vendor-management-data") {
+        loadVendorsCount();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const transactions = new Array(4).fill(0).map((_, i) => ({
     id: i + 1,
     name: ['Saima Asif', 'Ali Ahmed', 'Fatima Khan', 'Usman Malik'][i],
@@ -67,9 +131,7 @@ export default function AdminDashboard() {
     { id: 'books', label: 'Book Management', icon: <FaBook />, path: '/books' },
     { id: 'orders', label: 'Transactions Details', icon: <FaCreditCard />, path: '/orders' },
     { id: 'reports', label: 'Reports', icon: <FaChartLine />, path: '/reports' },
-    { id: 'categories', label: 'Categories', icon: <FaTags />, path: '/categories' },
-    { id: 'notifications', label: 'Notifications', icon: <FaBell />, path: '/notifications' },
-    { id: 'setting', label: 'Settings', icon: <FaCog />, path: '/settings' },
+    { id: 'setting', label: 'Settings', icon: <FaCog />, path: '/settings' }
   ];
 
   const handleTabChange = (tab) => {
@@ -113,9 +175,9 @@ export default function AdminDashboard() {
 
       {/* Main area */}
       <main className="flex-grow-1 p-4 overflow-auto">
-        {activeSection === 'users' && <UserManagement />}
-        {activeSection === 'vendors' && <VendorManagement />}
-        {activeSection === 'books' && <BookManagement />}
+        {activeSection === 'users' && <UserManagement initialTab={userInitialTab} />}
+        {activeSection === 'vendors' && <VendorManagement initialTab={vendorInitialTab} />}
+        {activeSection === 'books' && <BookManagement initialTab={bookManagementTab} />}
         {activeSection === 'orders' && <Orders />}
         {activeSection === 'reports' && <Reports />}
         {activeSection === 'categories' && <Categories />}
@@ -133,13 +195,13 @@ export default function AdminDashboard() {
             {/* Top stat cards */}
             <div className="row mb-4">
               <div className="col-md-4 mb-3">
-                <StatCard title="Total Users" value={stats.users} icon={<FaUserFriends />} />
+                <StatCard title="Total Users" value={stats.users} icon={<FaUserFriends />} onClick={() => { setUserInitialTab('View Users'); setActiveSection('users'); }} />
               </div>
               <div className="col-md-4 mb-3">
-                <StatCard title="Total Vendors" value={stats.vendors} icon={<FaStoreAlt />} onClick={() => setActiveSection('vendors')} />
+                <StatCard title="Total Vendors" value={stats.vendors} icon={<FaStoreAlt />} onClick={() => { setVendorInitialTab('View Vendors'); setActiveSection('vendors'); }} />
               </div>
               <div className="col-md-4 mb-3">
-                <StatCard title="Total Books" value={stats.books} icon={<FaBookOpen />} onClick={() => setActiveSection('books')} />
+                <StatCard title="Total Books" value={stats.books} icon={<FaBookOpen />} onClick={() => { setBookManagementTab('View Books'); setActiveSection('books'); }} />
               </div>
             </div>
 
@@ -267,28 +329,12 @@ export default function AdminDashboard() {
                         <div className="card-body">
                           <h5 className="card-title">{book.title}</h5>
                           <p className="card-text">
-                            <strong>User:</strong> {book.userName}<br />
+                            <strong>User ID:</strong> {book.userId}<br />
                             <strong>Genre:</strong> {book.genre}<br />
-                            <strong>Type:</strong> {book.fictionNonfiction}<br />
+                            <strong>Type:</strong> {book.type}<br />
                             <strong>Price:</strong> Rs. {book.price.toLocaleString()}<br />
-                            <strong>Quantity:</strong> {book.quantity}
+                            <strong>Condition:</strong> {book.condition}
                           </p>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <span className={`badge ${
-                              book.condition === 'New' ? 'bg-success' :
-                              book.condition === 'Good' ? 'bg-primary' :
-                              book.condition === 'Used' ? 'bg-warning text-dark' :
-                              'bg-secondary'
-                            }`}>
-                              {book.condition}
-                            </span>
-                            <span className={`badge ${
-                              book.fictionNonfiction === 'Fiction' ? 'bg-info' :
-                              'bg-dark'
-                            }`}>
-                              {book.fictionNonfiction}
-                            </span>
-                          </div>
                         </div>
                       </div>
                     </div>

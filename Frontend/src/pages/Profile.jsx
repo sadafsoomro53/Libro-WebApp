@@ -1,14 +1,13 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaUserTag } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
 export default function Profile() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
-  const userData = location.state || {
+  const userData = user || {
     username: 'Guest',
     email: 'guest@example.com',
     gender: 'Not specified',

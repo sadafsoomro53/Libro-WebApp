@@ -114,9 +114,9 @@ const Navbar = () => {
                       <div className="mb-2 text-truncate" title={user.email}>
                         {user.email}
                       </div>
-                      <button className="btn btn-danger btn-sm w-100" onClick={handleLogout}>
-                        Logout
-                      </button>
+                      <div className="mb-2">
+                        Gender: {user.gender || 'Not specified'}
+                      </div>
                     </div>
                   )}
                 </li>
@@ -171,9 +171,9 @@ const Navbar = () => {
                       <div className="mb-2 text-truncate" title={user.email}>
                         {user.email}
                       </div>
-                      <button className="btn btn-danger btn-sm w-100" onClick={handleLogout}>
-                        Logout
-                      </button>
+                      <div className="mb-2">
+                        Gender: {user.gender || 'Not specified'}
+                      </div>
                     </div>
                   )}
                 </li>

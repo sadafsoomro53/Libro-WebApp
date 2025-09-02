@@ -14,7 +14,8 @@ const seedUsers = [
     status: 'Active',
     joinDate: '15 Jan 2023',
     role: 'User',
-    address: '123 Main St, City, State'
+    address: '123 Main St, City, State',
+    blocked: false
   },
   {
     id: 2,
@@ -25,7 +26,8 @@ const seedUsers = [
     status: 'Active',
     joinDate: '28 Feb 2023',
     role: 'Admin',
-    address: '456 Oak Ave, City, State'
+    address: '456 Oak Ave, City, State',
+    blocked: false
   },
   {
     id: 3,
@@ -36,7 +38,8 @@ const seedUsers = [
     status: 'Inactive',
     joinDate: '12 Mar 2023',
     role: 'User',
-    address: '789 Pine Rd, City, State'
+    address: '789 Pine Rd, City, State',
+    blocked: true
   },
   {
     id: 4,
@@ -47,7 +50,8 @@ const seedUsers = [
     status: 'Active',
     joinDate: '05 Apr 2023',
     role: 'Moderator',
-    address: '321 Elm St, City, State'
+    address: '321 Elm St, City, State',
+    blocked: false
   },
   {
     id: 5,
@@ -58,16 +62,27 @@ const seedUsers = [
     status: 'Pending',
     joinDate: '20 May 2023',
     role: 'User',
-    address: '654 Maple Dr, City, State'
+    address: '654 Maple Dr, City, State',
+    blocked: false
   }
 ];
 
-const UserManagement = () => {
+const UserManagement = ({ initialTab = 'Add User' }) => {
   // State for users data
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem(LS_USERS);
     return saved ? JSON.parse(saved) : seedUsers;
   });
+
+  // Toggle block/unblock user
+  const toggleBlockUser = (id) => {
+    setUsers(users.map(user => {
+      if (user.id === id) {
+        return { ...user, blocked: !user.blocked };
+      }
+      return user;
+    }));
+  };
 
   // State for form handling
   const [showForm, setShowForm] = useState(false);
@@ -223,6 +238,11 @@ const UserManagement = () => {
   const [activeTab, setActiveTab] = useState('Add User');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Set initial tab based on prop
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const handleTabChange = (tab) => {
     setIsLoading(true);
     setActiveTab(tab);
@@ -281,7 +301,7 @@ const UserManagement = () => {
               </div>
             </div>
           ) : activeTab === 'View Users' ? (
-            <UsersTable users={users} onView={viewUser} onEdit={startEdit} onDelete={deleteUser} />
+            <UsersTable users={users} onView={viewUser} onEdit={startEdit} onDelete={deleteUser} onBlockToggle={toggleBlockUser} />
           ) : activeTab === 'User Activity' ? (
             <UserActivity users={users} />
           ) : activeTab === 'Account Settings' ? (
@@ -481,7 +501,7 @@ const UserManagement = () => {
 };
 
 /* ------------------ User Components ------------------ */
-function UsersTable({ users, onView, onEdit, onDelete }) {
+function UsersTable({ users, onView, onEdit, onDelete, onBlockToggle }) {
   return (
     <div className="table-responsive">
       <table className="table table-striped">
@@ -491,16 +511,24 @@ function UsersTable({ users, onView, onEdit, onDelete }) {
             <th className="d-none d-md-table-cell">Email</th>
             <th className="d-none d-lg-table-cell">Phone</th>
             <th>User ID</th>
+            <th>Blocked</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.id}>
+            <tr key={user.id} className={user.blocked ? 'table-danger' : ''}>
               <td className="fw-medium">{user.name}</td>
               <td className="text-muted d-none d-md-table-cell">{user.email}</td>
               <td className="text-muted d-none d-lg-table-cell">{user.phone}</td>
               <td className="fw-medium">{user.userId}</td>
+              <td>
+                {user.blocked ? (
+                  <span className="badge bg-danger">Blocked</span>
+                ) : (
+                  <span className="badge bg-success">Active</span>
+                )}
+              </td>
               <td>
                 <div className="d-flex flex-wrap gap-1">
                   <button
@@ -516,6 +544,13 @@ function UsersTable({ users, onView, onEdit, onDelete }) {
                     onClick={() => onEdit(user)}
                   >
                     <FaEdit />
+                  </button>
+                  <button
+                    title={user.blocked ? "Unblock" : "Block"}
+                    className={`btn btn-sm btn-outline-${user.blocked ? "success" : "warning"}`}
+                    onClick={() => onBlockToggle(user.id)}
+                  >
+                    {user.blocked ? "Unblock" : "Block"}
                   </button>
                   <button
                     title="Delete"

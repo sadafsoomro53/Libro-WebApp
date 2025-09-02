@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import {
   FaFacebookSquare,
   FaInstagram,
@@ -55,16 +56,13 @@ const Footer = () => {
             <div className="row">
               <div className="col-6">
                 <ul className="list-unstyled">
-                  <li><a className="text-white text-decoration-none" href="/admin">Dashboard</a></li>
-                  <li><a className="text-white text-decoration-none" href="/users">Users Management</a></li>
-                  <li><a className="text-white text-decoration-none" href="/vendors">Vendors Management</a></li>
-                  <li><a className="text-white text-decoration-none" href="/books">Book Management</a></li>
-                  <li><a className="text-white text-decoration-none" href="/orders">Order/Transactions</a></li>
-                  <li><a className="text-white text-decoration-none" href="/reports">Reports</a></li>
-                  <li><a className="text-white text-decoration-none" href="/categories">Categories</a></li>
-                  <li><a className="text-white text-decoration-none" href="/notifications">Notifications</a></li>
-                  <li><a className="text-white text-decoration-none" href="/settings">Settings</a></li>
-                  <li><a className="text-white text-decoration-none" href="/contact">Contact</a></li>
+                  <li><Link className="text-white text-decoration-none" to="/admin">Dashboard</Link></li>
+                  <li><Link className="text-white text-decoration-none" to="/users">Users</Link></li>
+                  <li><Link className="text-white text-decoration-none" to="/vendors">Vendors</Link></li>
+                  <li><Link className="text-white text-decoration-none" to="/books">Books</Link></li>
+                  <li><Link className="text-white text-decoration-none" to="/orders">Order</Link></li>
+                  <li><Link className="text-white text-decoration-none" to="/reports">Reports</Link></li>
+                  <li><Link className="text-white text-decoration-none" to="/settings">Settings</Link></li>
                 </ul>
               </div>
             </div>
@@ -118,21 +116,6 @@ const Footer = () => {
             <small className="d-block text-white-50 mt-2">
               Or reach out via DM on any social channel — we respond within 24 hours.
             </small>
-          </div>
-        </div>
-
-        {/* Optional extra quickhand row (useful on wide screens) */}
-        <div className="row mt-4">
-          <div className="col-12 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div className="text-white-50 small">
-              <strong>Office Hours:</strong> Mon - Fri, 9:00am - 6:00pm
-            </div>
-
-            <div className="d-flex gap-3">
-              <a href="/privacy" className="text-white-50 text-decoration-none small">Privacy Policy</a>
-              <a href="/terms" className="text-white-50 text-decoration-none small">Terms</a>
-              <a href="/sitemap" className="text-white-50 text-decoration-none small">Sitemap</a>
-            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 export default function SignUp() {
   const [role, setRole] = useState('user');
@@ -8,6 +9,7 @@ export default function SignUp() {
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -26,8 +28,10 @@ export default function SignUp() {
       alert('Passwords do not match');
       return;
     }
-    // Pass user data to profile page for seamless transition
-    navigate('/profile', { state: { username: form.username, email: form.email, gender: form.gender, image: preview } });
+    // Persist user data in auth context
+    login({ username: form.username, email: form.email, gender: form.gender, image: preview, role });
+    // Navigate to profile page
+    navigate('/profile');
   };
 
   return (

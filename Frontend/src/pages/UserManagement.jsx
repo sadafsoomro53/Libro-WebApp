@@ -1,262 +1,145 @@
 import React, { useState, useEffect } from 'react';
 import { FaEye, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-
-const LS_USERS = "user-management-data";
-
-// Seed data for users
-const seedUsers = [
-  {
-    id: 1,
-    name: 'Alice Johnson',
-    email: 'alice@email.com',
-    phone: '+1 555 1234567',
-    userId: 'USR001',
-    status: 'Active',
-    joinDate: '15 Jan 2023',
-    role: 'User',
-    address: '123 Main St, City, State',
-    blocked: false
-  },
-  {
-    id: 2,
-    name: 'Bob Smith',
-    email: 'bob@email.com',
-    phone: '+1 555 2345678',
-    userId: 'USR002',
-    status: 'Active',
-    joinDate: '28 Feb 2023',
-    role: 'Admin',
-    address: '456 Oak Ave, City, State',
-    blocked: false
-  },
-  {
-    id: 3,
-    name: 'Charlie Brown',
-    email: 'charlie@email.com',
-    phone: '+1 555 3456789',
-    userId: 'USR003',
-    status: 'Inactive',
-    joinDate: '12 Mar 2023',
-    role: 'User',
-    address: '789 Pine Rd, City, State',
-    blocked: true
-  },
-  {
-    id: 4,
-    name: 'Diana Prince',
-    email: 'diana@email.com',
-    phone: '+1 555 4567890',
-    userId: 'USR004',
-    status: 'Active',
-    joinDate: '05 Apr 2023',
-    role: 'Moderator',
-    address: '321 Elm St, City, State',
-    blocked: false
-  },
-  {
-    id: 5,
-    name: 'Ethan Hunt',
-    email: 'ethan@email.com',
-    phone: '+1 555 5678901',
-    userId: 'USR005',
-    status: 'Pending',
-    joinDate: '20 May 2023',
-    role: 'User',
-    address: '654 Maple Dr, City, State',
-    blocked: false
-  }
-];
+import { db } from "../firebase"; 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  doc
+} from "firebase/firestore";
 
 const UserManagement = ({ initialTab = 'Add User' }) => {
-  // State for users data
-  const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem(LS_USERS);
-    return saved ? JSON.parse(saved) : seedUsers;
-  });
+  const [users, setUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState('Add User');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const usersRef = collection(db, "users");
+
+  useEffect(() => {
+    const unsub = onSnapshot(usersRef, (snapshot) => {
+      const userList = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      setUsers(userList);
+    });
+    return () => unsub();
+  }, []);
 
   // Toggle block/unblock user
-  const toggleBlockUser = (id) => {
-    const user = users.find(u => u.id === id);
-    const isBlocking = !user.blocked;
-
-    if (isBlocking) {
-      if (window.confirm(`Are you sure you want to block ${user.name}? They will be added to the blocked users list in Settings.`)) {
-        setUsers(users.map(u => {
-          if (u.id === id) {
-            return { ...u, blocked: true };
-          }
-          return u;
-        }));
-        // Show navigation hint
-        setTimeout(() => {
-          alert(`User ${user.name} has been blocked. You can manage blocked users in Settings > Blocked Users.`);
-        }, 100);
-      }
-    } else {
-      setUsers(users.map(u => {
-        if (u.id === id) {
-          return { ...u, blocked: false };
-        }
-        return u;
-      }));
+  const toggleBlockUser = async (id, currentStatus) => {
+    try {
+      await updateDoc(doc(db, "users", id), { blocked: !currentStatus });
+    } catch (err) {
+      console.error("Error updating block status:", err);
     }
   };
 
   // State for form handling
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    userId: '',
-    role: 'User',
-    status: 'Active',
-    address: ''
-  });
+const [formData, setFormData] = useState({
+  name: '',
+  email: '',
+  phone: '',
+  userType: 'User'
+});
 
-  // State for edit modal
-  const [editingUserModal, setEditingUserModal] = useState(null);
-  const [modalFormData, setModalFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    userId: '',
-    role: 'User',
-    status: 'Active',
-    address: ''
-  });
+// State for edit modal
+const [editingUserModal, setEditingUserModal] = useState(null);
+const [modalFormData, setModalFormData] = useState({
+  name: '',
+  email: '',
+  phone: '',
+  userType: 'User'
+});
+
 
   // State for viewing user details
   const [viewingUser, setViewingUser] = useState(null);
 
-  // Save users to localStorage whenever users change
-  useEffect(() => {
-    localStorage.setItem(LS_USERS, JSON.stringify(users));
-  }, [users]);
-
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   // Handle modal form input changes
   const handleModalInputChange = (e) => {
     const { name, value } = e.target;
-    setModalFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setModalFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle modal form submission
-  const handleModalSubmit = (e) => {
+  // Handle modal form submission (update user in Firestore)
+  const handleModalSubmit = async (e) => {
     e.preventDefault();
-
-    // Validation
-    if (!modalFormData.name.trim() || !modalFormData.email.trim() || !modalFormData.phone.trim() || !modalFormData.userId.trim()) {
-      alert("Please fill in all required fields");
-      return;
+    try {
+      await updateDoc(doc(db, "users", editingUserModal.id), {
+        ...modalFormData,
+      });
+      setEditingUserModal(null);
+    } catch (err) {
+      console.error("Error updating user:", err);
     }
-
-    const userData = {
-      ...modalFormData,
-      id: editingUserModal.id,
-      joinDate: editingUserModal.joinDate
-    };
-
-    setUsers(users.map(user =>
-      user.id === editingUserModal.id ? userData : user
-    ));
-
-    setEditingUserModal(null);
   };
 
-  // Close edit modal
-  const closeEditModal = () => {
-    setEditingUserModal(null);
-  };
+  const closeEditModal = () => setEditingUserModal(null);
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  // Handle add new user
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      if (editingUser) {
+        await updateDoc(doc(db, "users", editingUser.id), {
+          ...formData,
+        });
+          alert("User updated successfully!");
 
-    // Validation
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.userId.trim()) {
-      alert("Please fill in all required fields");
-      return;
+      } else {
+        await addDoc(usersRef, {
+          ...formData,
+          blocked: false,
+        });
+        alert("User added successfully!");
+      }
+      resetForm();
+    } catch (err) {
+      console.error("Error saving user:", err);
     }
-
-    const userData = {
-      ...formData,
-      id: editingUser ? editingUser.id : Date.now(),
-      joinDate: editingUser ? editingUser.joinDate : new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    };
-
-    if (editingUser) {
-      // Update existing user
-      setUsers(users.map(user =>
-        user.id === editingUser.id ? userData : user
-      ));
-    } else {
-      // Add new user
-      setUsers([...users, userData]);
-    }
-
-    // Reset form
-    resetForm();
   };
 
-  // Reset form
   const resetForm = () => {
     setFormData({
       name: '',
       email: '',
       phone: '',
-      userId: '',
-      role: 'User',
-      status: 'Active',
-      address: ''
+      userType: 'User',
     });
     setEditingUser(null);
     setShowForm(false);
   };
 
-  // Start editing a user
   const startEdit = (user) => {
     setEditingUserModal(user);
     setModalFormData(user);
   };
 
-  // Delete a user
-  const deleteUser = (id) => {
+  const deleteUser = async (id) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter(user => user.id !== id));
+      try {
+await deleteDoc(doc(db, "users", id));
+      } catch (err) {
+        console.error("Error deleting user:", err);
+      }
     }
   };
 
-  // View user details
-  const viewUser = (user) => {
-    setViewingUser(user);
-  };
+  const viewUser = (user) => setViewingUser(user);
+  const closeViewModal = () => setViewingUser(null);
 
-  // Close view modal
-  const closeViewModal = () => {
-    setViewingUser(null);
-  };
-
-  const [activeTab, setActiveTab] = useState('Add User');
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Set initial tab based on prop
+  // keep your existing tab logic
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
@@ -266,6 +149,7 @@ const UserManagement = ({ initialTab = 'Add User' }) => {
     setActiveTab(tab);
     setTimeout(() => setIsLoading(false), 300);
   };
+
 
   return (
     <div className="container-fluid py-4">
@@ -361,40 +245,15 @@ const UserManagement = ({ initialTab = 'Add User' }) => {
                   </div>
                   <div className="col-12 mb-3">
                     <h6>User ID:</h6>
-                    <p>{viewingUser.userId}</p>
+                    <p>{viewingUser.id}</p>
                   </div>
                   <div className="col-12 mb-3">
                     <h6>Role:</h6>
                     <p>
-                      <span className={`badge ${
-                        viewingUser.role === 'Admin' ? 'bg-danger' :
-                        viewingUser.role === 'Moderator' ? 'bg-warning text-dark' :
-                        'bg-primary'
-                      }`}>
-                        {viewingUser.role}
-                      </span>
+                        {viewingUser.userType}
                     </p>
                   </div>
-                  <div className="col-12 mb-3">
-                    <h6>Status:</h6>
-                    <p>
-                      <span className={`badge ${
-                        viewingUser.status === 'Active' ? 'bg-success' :
-                        viewingUser.status === 'Inactive' ? 'bg-secondary' :
-                        'bg-warning text-dark'
-                      }`}>
-                        {viewingUser.status}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="col-12 mb-3">
-                    <h6>Join Date:</h6>
-                    <p>{viewingUser.joinDate}</p>
-                  </div>
-                  <div className="col-12 mb-3">
-                    <h6>Address:</h6>
-                    <p>{viewingUser.address}</p>
-                  </div>
+                  
                 </div>
               </div>
               <div className="modal-footer">
@@ -408,181 +267,158 @@ const UserManagement = ({ initialTab = 'Add User' }) => {
       )}
 
       {/* Edit User Modal */}
-      {editingUserModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Edit User</h5>
-                <button type="button" className="btn-close" onClick={closeEditModal}></button>
+{editingUserModal && (
+  <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Edit User</h5>
+          <button type="button" className="btn-close" onClick={closeEditModal}></button>
+        </div>
+        <form onSubmit={handleModalSubmit}>
+          <div className="modal-body">
+            <div className="row">
+              {/* Full Name */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={modalFormData.name}
+                  onChange={handleModalInputChange}
+                  required
+                />
               </div>
-              <form onSubmit={handleModalSubmit}>
-                <div className="modal-body">
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Full Name *</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="name"
-                        value={modalFormData.name}
-                        onChange={handleModalInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Email *</label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        name="email"
-                        value={modalFormData.email}
-                        onChange={handleModalInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Phone Number *</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="phone"
-                        value={modalFormData.phone}
-                        onChange={handleModalInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">User ID *</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="userId"
-                        value={modalFormData.userId}
-                        onChange={handleModalInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Role</label>
-                      <select
-                        className="form-select"
-                        name="role"
-                        value={modalFormData.role}
-                        onChange={handleModalInputChange}
-                      >
-                        <option value="User">User</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Moderator">Moderator</option>
-                      </select>
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Status</label>
-                      <select
-                        className="form-select"
-                        name="status"
-                        value={modalFormData.status}
-                        onChange={handleModalInputChange}
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                        <option value="Pending">Pending Approval</option>
-                      </select>
-                    </div>
-                    <div className="col-12 mb-3">
-                      <label className="form-label">Address</label>
-                      <textarea
-                        className="form-control"
-                        name="address"
-                        value={modalFormData.address}
-                        onChange={handleModalInputChange}
-                        rows="3"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={closeEditModal}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Update User
-                  </button>
-                </div>
-              </form>
+
+              {/* Email */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Email *</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  name="email"
+                  value={modalFormData.email}
+                  onChange={handleModalInputChange}
+                  required
+                />
+              </div>
+
+              {/* Phone */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Phone Number *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="phone"
+                  value={modalFormData.phone}
+                  onChange={handleModalInputChange}
+                  required
+                />
+              </div>
+
+              {/* Role */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Role</label>
+                <select
+                  className="form-select"
+                  name="userType"
+                  value={modalFormData.userType}
+                  onChange={handleModalInputChange}
+                >
+                  <option value="User">User</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Vendor">Vendor</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={closeEditModal}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Update User
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
-};
 
-/* ------------------ User Components ------------------ */
+}
+
 function UsersTable({ users, onView, onEdit, onDelete, onBlockToggle }) {
   return (
     <div className="table-responsive">
-      <table className="table table-striped">
-        <thead className="table-light">
-          <tr>
-            <th>Name</th>
-            <th className="d-none d-md-table-cell">Email</th>
-            <th className="d-none d-lg-table-cell">Phone</th>
-            <th>User ID</th>
-            <th>Blocked</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className={user.blocked ? 'table-danger' : ''}>
-              <td className="fw-medium">{user.name}</td>
-              <td className="text-muted d-none d-md-table-cell">{user.email}</td>
-              <td className="text-muted d-none d-lg-table-cell">{user.phone}</td>
-              <td className="fw-medium">{user.userId}</td>
-              <td>
-                {user.blocked ? (
-                  <span className="badge bg-danger">Blocked</span>
-                ) : (
-                  <span className="badge bg-success">Active</span>
-                )}
-              </td>
-              <td>
-                <div className="d-flex flex-wrap gap-1">
-                  <button
-                    title="View"
-                    className="btn btn-sm btn-outline-primary"
-                    onClick={() => onView(user)}
-                  >
-                    <FaEye />
-                  </button>
-                  <button
-                    title="Edit"
-                    className="btn btn-sm btn-outline-dark"
-                    onClick={() => onEdit(user)}
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    title={user.blocked ? "Unblock" : "Block"}
-                    className={`btn btn-sm btn-outline-${user.blocked ? "success" : "warning"}`}
-                    onClick={() => onBlockToggle(user.id)}
-                  >
-                    {user.blocked ? "Unblock" : "Block"}
-                  </button>
-                  <button
-                    title="Delete"
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => onDelete(user.id)}
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  <table className="table table-striped">
+  <thead className="table-light">
+    <tr>
+      <th>Name</th>
+      <th className="d-none d-md-table-cell">Email</th>
+      <th className="d-none d-lg-table-cell">Phone</th>
+      <th>User ID</th>
+      <th>Blocked</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {users.map((user) => (
+      <tr key={user.id} className={user.blocked ? 'table-danger' : ''}>
+        <td className="fw-medium">{user.name || "N/A"}</td>
+        <td className="text-muted d-none d-md-table-cell">{user.email || "N/A"}</td>
+        <td className="text-muted d-none d-lg-table-cell">{user.phone || "N/A"}</td>
+        <td className="fw-medium">{user.id || "N/A"}</td>
+        <td>
+          {user.blocked ? (
+            <span className="badge bg-danger">Blocked</span>
+          ) : (
+            <span className="badge bg-success">Active</span>
+          )}
+        </td>
+        <td>
+          <div className="d-flex flex-wrap gap-1">
+            <button
+              title="View"
+              className="btn btn-sm btn-outline-primary"
+              onClick={() => onView(user)}
+            >
+              <FaEye />
+            </button>
+            <button
+              title="Edit"
+              className="btn btn-sm btn-outline-dark"
+              onClick={() => onEdit(user)}
+            >
+              <FaEdit />
+            </button>
+            <button
+              title={user.blocked ? "Unblock" : "Block"}
+              className={`btn btn-sm btn-outline-${user.blocked ? "success" : "warning"}`}
+              onClick={() => onBlockToggle(user.id, user.blocked)}
+            >
+              {user.blocked ? "Unblock" : "Block"}
+            </button>
+            <button
+              title="Delete"
+              className="btn btn-sm btn-outline-danger"
+              onClick={() => onDelete(user.id)}
+            >
+              <FaTrash />
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+
     </div>
   );
 }
@@ -603,11 +439,7 @@ function UserActivity({ users }) {
                     {user.status}
                   </span>
                 </div>
-                <div className="d-flex justify-content-between align-items-center mt-2">
-                  <span className="text-muted small">Join Date:</span>
-                  <span className="fw-bold">{user.joinDate}</span>
-                </div>
-              </div>
+             </div>
             </div>
           </div>
         ))}
@@ -680,61 +512,25 @@ function UserForm({ formData, editingUser, onInputChange, onSubmit, onReset }) {
           value={formData.phone}
           onChange={onInputChange}
           className="form-control"
-          placeholder="+1 555 1234567"
+          placeholder="0344 1234567"
           required
         />
       </div>
 
-      <div className="col-md-6">
-        <label className="form-label">User ID *</label>
-        <input
-          name="userId"
-          value={formData.userId}
-          onChange={onInputChange}
-          className="form-control"
-          placeholder="USR001"
-          required
-        />
-      </div>
+      {/* ❌ Removed the User ID field */}
 
       <div className="col-md-6">
         <label className="form-label">Role</label>
         <select
-          name="role"
-          value={formData.role}
+          name="userType"
+          value={formData.userType}
           onChange={onInputChange}
           className="form-select"
         >
           <option value="User">User</option>
           <option value="Admin">Admin</option>
-          <option value="Moderator">Moderator</option>
+          <option value="Vendor">Vendor</option>
         </select>
-      </div>
-
-      <div className="col-md-6">
-        <label className="form-label">Status</label>
-        <select
-          name="status"
-          value={formData.status}
-          onChange={onInputChange}
-          className="form-select"
-        >
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-          <option value="Pending">Pending Approval</option>
-        </select>
-      </div>
-
-      <div className="col-12">
-        <label className="form-label">Address</label>
-        <textarea
-          name="address"
-          value={formData.address}
-          onChange={onInputChange}
-          className="form-control"
-          placeholder="Enter complete address"
-          rows="3"
-        />
       </div>
 
       <div className="col-12 d-flex justify-content-end gap-2 mt-3">

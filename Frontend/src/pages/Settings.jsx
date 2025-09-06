@@ -1,31 +1,96 @@
 // src/pages/Settings.jsx
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FaBell, FaUserEdit, FaUserPlus, FaSignOutAlt, FaUserSlash, FaStoreSlash } from "react-icons/fa";
+import { db } from "../firebase";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc
+} from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
 
 const Settings = () => {
+  const [searchParams] = useSearchParams();
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("sub-admin");
   const [muteNotifications, setMuteNotifications] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [blockedVendors, setBlockedVendors] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [totalUsersCount, setTotalUsersCount] = useState(0);
+  const [editForm, setEditForm] = useState({
+    username: user?.username || '',
+    email: user?.email || '',
+    password: '',
+    confirmPassword: ''
+  });
 
-  // Load blocked users and vendors from localStorage
+  // Load users from Firestore
   useEffect(() => {
-    const users = JSON.parse(localStorage.getItem("user-management-data") || "[]");
-    const vendors = JSON.parse(localStorage.getItem("vendor-management-data") || "[]");
+    const usersRef = collection(db, "users");
+    const unsub = onSnapshot(usersRef, (snapshot) => {
+      const userList = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      setAllUsers(userList);
+      setBlockedUsers(userList.filter(user => user.blocked));
+      setTotalUsersCount(userList.length);
+    });
+    return () => unsub();
+  }, []);
 
-    setBlockedUsers(users.filter(user => user.blocked));
+  // Load blocked vendors from localStorage
+  useEffect(() => {
+    const vendors = JSON.parse(localStorage.getItem("vendor-management-data") || "[]");
     setBlockedVendors(vendors.filter(vendor => vendor.blocked));
   }, [activeTab]); // Reload when tab changes
 
+  // Set activeTab from query param
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
+  // Update editForm when user changes
+  useEffect(() => {
+    setEditForm({
+      username: user?.username || '',
+      email: user?.email || '',
+      password: '',
+      confirmPassword: ''
+    });
+  }, [user]);
+
+  const handleSave = () => {
+    if (editForm.password && editForm.password !== editForm.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    updateUser({ username: editForm.username, email: editForm.email });
+    alert('Profile updated successfully');
+  };
+
+  const handleDiscard = () => {
+    setEditForm({
+      username: user?.username || '',
+      email: user?.email || '',
+      password: '',
+      confirmPassword: ''
+    });
+  };
+
   // Unblock user
-  const unblockUser = (id) => {
-    const users = JSON.parse(localStorage.getItem("user-management-data") || "[]");
-    const updatedUsers = users.map(user =>
-      user.id === id ? { ...user, blocked: false } : user
-    );
-    localStorage.setItem("user-management-data", JSON.stringify(updatedUsers));
-    setBlockedUsers(updatedUsers.filter(user => user.blocked));
+  const unblockUser = async (id) => {
+    try {
+      await updateDoc(doc(db, "users", id), { blocked: false });
+      // The onSnapshot listener will automatically update the blockedUsers state
+    } catch (err) {
+      console.error("Error unblocking user:", err);
+    }
   };
 
   // Unblock vendor
@@ -243,6 +308,8 @@ const Settings = () => {
                   <input
                     type="text"
                     className="form-control rounded-pill"
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
                     placeholder="Enter new username"
                   />
                 </div>
@@ -252,6 +319,8 @@ const Settings = () => {
                   <input
                     type="password"
                     className="form-control rounded-pill"
+                    value={editForm.password}
+                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
                     placeholder="Enter new Password"
                   />
                 </div>
@@ -261,6 +330,8 @@ const Settings = () => {
                   <input
                     type="password"
                     className="form-control rounded-pill"
+                    value={editForm.confirmPassword}
+                    onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
                     placeholder="Confirm Password"
                   />
                 </div>
@@ -270,14 +341,18 @@ const Settings = () => {
                   <input
                     type="email"
                     className="form-control rounded-pill"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                     placeholder="Enter New Email"
                   />
                 </div>
 
                 <div className="d-flex flex-column flex-sm-row gap-2">
                   <button
+                    type="button"
                     className="btn text-white rounded-pill px-4"
                     style={{ background: "linear-gradient(90deg,#04364A,#2D9596)" }}
+                    onClick={handleSave}
                   >
                     Save Changes
                   </button>
@@ -285,6 +360,7 @@ const Settings = () => {
                     type="button"
                     className="btn text-white rounded-pill px-4"
                     style={{ background: "linear-gradient(90deg,#2D9596,#04364A)" }}
+                    onClick={handleDiscard}
                   >
                     Discard Changes
                   </button>

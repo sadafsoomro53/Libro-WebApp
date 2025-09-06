@@ -7,6 +7,8 @@ import Orders from './Orders';
 import Reports from './Reports';
 import Settings from './Settings';
 import Charts from '../components/Charts';
+import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -19,34 +21,22 @@ export default function AdminDashboard() {
 const [stats, setStats] = useState({ users: 0, vendors: 0, books: 8924 });
 
 useEffect(() => {
-  const loadUsersCount = () => {
-    try {
-      const usersData = localStorage.getItem("user-management-data");
-      const users = usersData ? JSON.parse(usersData) : [];
-      setStats(prevStats => ({
-        ...prevStats,
-        users: users.length
-      }));
-    } catch (error) {
-      console.error("Error loading users from localStorage:", error);
-      setStats(prevStats => ({
-        ...prevStats,
-        users: 0
-      }));
-    }
-  };
+  const usersRef = collection(db, "users");
+  const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+    const usersCount = snapshot.size;
+    setStats(prevStats => ({
+      ...prevStats,
+      users: usersCount
+    }));
+  }, (error) => {
+    console.error("Error loading users from Firestore:", error);
+    setStats(prevStats => ({
+      ...prevStats,
+      users: 0
+    }));
+  });
 
-  loadUsersCount();
-
-  // Add event listener to update when users change in localStorage
-  const handleStorageChange = (e) => {
-    if (e.key === "user-management-data") {
-      loadUsersCount();
-    }
-  };
-
-  window.addEventListener("storage", handleStorageChange);
-  return () => window.removeEventListener("storage", handleStorageChange);
+  return () => unsubscribe();
 }, []);
   const [dashboardBooks, setDashboardBooks] = useState([]);
 
